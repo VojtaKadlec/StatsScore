@@ -5,14 +5,11 @@ from teamy.models import Hrac
 class Stats(models.Model):
     zapas = models.ForeignKey(Zapas, on_delete=models.CASCADE)
     hrac = models.ForeignKey(Hrac, on_delete=models.CASCADE)
-    skore = models.IntegerField(default=0)
-    tresty=models.ManyToManyField("Trest")
-    
-class Trest(models.Model):
-    zapas = models.ForeignKey(Zapas, on_delete=models.CASCADE)
-    hrac = models.ForeignKey(Hrac, on_delete=models.CASCADE)
-    trest = models.IntegerField(default=0)
+    goly = models.IntegerField(default=0, blank=True, null=True)
 
-class Varovani(models.Model):
-    zapas = models.ForeignKey(Zapas, on_delete=models.CASCADE)
-    hrac = models.ForeignKey(Hrac, on_delete=models.CASCADE)
+    zlute_karty = models.IntegerField(default=0, blank=True, null=True)
+    trestne_minuty= models.IntegerField(default=0, blank=True, null=True)
+      
+
+
+

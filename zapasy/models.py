@@ -7,4 +7,4 @@ class Zapas(models.Model):
     domaci=models.ForeignKey(Team, on_delete=models.CASCADE)
     hoste=models.ForeignKey(Team, on_delete=models.CASCADE)
     datum=models.DateField()
-    status=models.CharField(choices=["Nadcházející", "Probíhající", "Ukončené"], max_length=20)
+    status=models.CharField(choices=[("nadchazejici", "Nadcházející"), ("probihajici", "Probíhající"), ("ukoncene", "Ukončené")], max_length=20)
