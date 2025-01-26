@@ -1,74 +1,135 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Base Template</title>
-    
+    <title>{% block title %}StatsScore88{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
+          background-color: black;
+          color: white;
+          margin: 0;
+          padding: 0;
         }
+      
         .navbar {
-            background-color: #2c3e50;
+          background-color: black;
         }
-        .navbar-brand, .nav-link {
-            color: #ecf0f1 !important;
+        .navbar-brand, 
+        .nav-link, 
+        .btn-outline-success {
+          color: white !important;
         }
-        .nav-link:hover {
-            color: #f39c12 !important;
+        .btn-outline-success {
+          border-color: white;
+          color: white;
         }
-        .custom-button {
-            background-color: #e74c3c;
-            color: #fff;
-            border: none;
-            border-radius: 20px;
-            padding: 5px 15px;
-            transition: all 0.3s ease;
+        .btn-outline-success:hover {
+          background-color: white;
+          color: black;
         }
-        .custom-button:hover {
-            background-color: #c0392b;
+        .btn-outline-success:focus,
+        .btn-outline-success:active {
+          background-color: transparent !important;
+          border-color: white !important;
+          color: white !important;
+          box-shadow: none !important;
+        }
+      
+        .dropdown-menu {
+          background-color: black;
+          border: none;
+        }
+        .dropdown-item {
+          color: white;
+        }
+        .dropdown-item:hover {
+          background-color: white;
+          color: black !important;
+        }
+      
+        .hero {
+          position: relative;
+          width: 100%;
+          height: 80vh;
+          background-image: url("{% static 'images/sportspic.jpg' %}");
+          background-size: cover;
+          background-position: center;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          text-align: center;
+        }
+        .hero h1 {
+          font-size: 3rem;
+          font-weight: bold;
+          text-shadow: 2px 2px 5px black;
+        }
+        @media (max-width: 768px) {
+          .hero h1 {
+            font-size: 2rem;
+          }
         }
     </style>
+    {% block extra_head %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-light">
         <div class="container">
-            <a class="navbar-brand" href="#">MyBrand</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <a class="navbar-brand" href="#">Stats Score</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
-                        <a class="nav-link" href="#">Home</a>
+                        <a class="nav-link active" aria-current="page" href="{% url 'home' %}">Home</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="hazenaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Házená
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="hazenaDropdown">
+                            <li><a class="dropdown-item" href="#">Házená League 1</a></li>
+                            <li><a class="dropdown-item" href="#">Házená League 2</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="fotbalDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Fotbal
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="fotbalDropdown">
+                            <li><a class="dropdown-item" href="#">Fotbal League 1</a></li>
+                            <li><a class="dropdown-item" href="#">Fotbal League 2</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="hokejDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            Hokej
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="hokejDropdown">
+                            <li><a class="dropdown-item" href="#">Hokej League 1</a></li>
+                            <li><a class="dropdown-item" href="#">Hokej League 2</a></li>
+                        </ul>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#">About</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Services</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">Contact</a>
+                        <a class="nav-link" href="#">Informace</a>
                     </li>
                 </ul>
-                <button class="custom-button ms-lg-3">Sign Up</button>
+                <button class="btn btn-outline-success" type="button">Admin</button>
             </div>
         </div>
     </nav>
 
+    {% block hero %}{% endblock %}
+
     <div class="container mt-5">
-        {% block content %}
-        
-        {% endblock %}
+        {% block content %}{% endblock %}
     </div>
 
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>
