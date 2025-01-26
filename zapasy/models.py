@@ -15,3 +15,5 @@ class Zapas(models.Model):
         ],
         max_length=20
     )
+
+    
