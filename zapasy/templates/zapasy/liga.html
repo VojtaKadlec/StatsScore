@@ -1,0 +1,33 @@
+{% extends 'zapasy/base.html' %}
+
+{% block title %}{{ liga.jmeno }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center my-4">{{ liga.jmeno }}</h1>
+    <div class="row">
+        {% for zapas in zapasy %}
+            <div class="col-md-4 mb-4">
+                <div class="card text-white bg-dark border-light">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ zapas.domaci }} vs {{ zapas.hoste }}</h5>
+                        <p class="card-text">{{ zapas.datum }}</p>
+                        <p class="card-text">
+                            <span class="badge 
+                                {% if zapas.status == 'nadchazejici' %} bg-warning 
+                                {% elif zapas.status == 'probihajici' %} bg-primary 
+                                {% elif zapas.status == 'ukoncene' %} bg-success 
+                                {% endif %}">
+                                {{ zapas.get_status_display }}
+                            </span>
+                        </p>
+                        <a href="{% url 'zapas' zapas.id %}" class="btn btn-outline-light">Detail zápasu</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p class="text-center">Žádné zápasy v této lize.</p>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

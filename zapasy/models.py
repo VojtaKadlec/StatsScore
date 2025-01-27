@@ -16,4 +16,14 @@ class Zapas(models.Model):
         max_length=20
     )
 
+    def __str__(self):
+        return f"{self.domaci} - {self.hoste}"
+
+class Liga(models.Model):
+    jmeno = models.CharField(max_length=20)
+    sport = models.ForeignKey(Sport, on_delete=models.CASCADE)
+    zapasy = models.ManyToManyField(Zapas)
+
+    def __str__(self):
+        return self.jmeno
     
