@@ -1,0 +1,109 @@
+{% extends 'zapasy/base.html' %}
+{% load filter %}
+{% load static %}
+
+{% block content %}
+<div class="container" data-sport="{{ zapas.sport.jmeno }}" data-match-id="{{ zapas.id }}" data-timer-running="{{ timer_running }}" data-elapsed-time="{{ elapsed_time }}">
+    <h1>Control Dashboard: {{ zapas.domaci }} vs {{ zapas.hoste }}</h1>
+    <p>Status: <span id="match-status">{{ zapas.get_status_display }}</span></p>
+
+    <div class="btn-group">
+        <button class="btn btn-primary {% if zapas.status != 'nadchazejici' and zapas.status != 'paused' %}disabled{% endif %}" onclick="performAction('start')">Start</button>
+        <button class="btn btn-warning {% if zapas.status != 'probihajici' %}disabled{% endif %}" onclick="performAction('pause')">Pause</button>
+        <button class="btn btn-success {% if zapas.status != 'probihajici' and zapas.status != 'paused' %}disabled{% endif %}" onclick="performAction('end')">End</button>
+    </div>
+
+    <div id="timer" style="font-size: 2rem; margin-top: 20px;">
+        Elapsed Time: <span id="elapsed-time">
+            {% with minutes=elapsed_time|div:60 seconds=elapsed_time|mod:60 %}
+                {{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }}
+            {% endwith %}
+        </span>
+    </div>
+
+    <h2>Players</h2>
+
+    <h3>Domáci</h3>
+    <div class="row">
+        {% for hrac in zapas.domaci.hraci.all %}
+            {% with player_stats|get_stat:hrac.id as stats %}
+            <div class="col-md-4">
+                <div class="card mb-3" data-player-number="{{ hrac.cislo }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ hrac.jmeno }}</h5>
+                        <p class="card-text" id="player-{{ hrac.id }}-stats">
+                            Goals: {{ stats.goly }}<br>
+                           
+                            {% if stats.zlute_karty > 0 %}Yellow Cards: {{ stats.zlute_karty }}<br>{% endif %}
+                           
+                            {% if zapas.sport.jmeno != 'fotbal' and stats.trestne_minuty > 0 %}
+                                Penalty Minutes: {{ stats.trestne_minuty }}<br>
+                            {% endif %}
+                           
+                            {% if zapas.sport.jmeno == 'hazena' and stats.penalty_total_count > 0 %}
+                                Total Penalties: {{ stats.penalty_total_count }}<br>
+                            {% endif %}
+                           
+                            {% if stats.disqualified %}
+                                <span class="text-danger">Disqualified</span>
+                            {% endif %}
+                        </p>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#playerModal{{ hrac.id }}">
+                            Add Stats
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% include 'zapasy/modal.html' with player=hrac stats=stats zapas=zapas %}
+            {% endwith %}
+        {% endfor %}
+    </div>
+
+    <h3>Hosté</h3>
+    <div class="row">
+        {% for hrac in zapas.hoste.hraci.all %}
+            {% with player_stats|get_stat:hrac.id as stats %}
+            <div class="col-md-4">
+                <div class="card mb-3" data-player-number="{{ hrac.cislo }}">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ hrac.jmeno }}</h5>
+                        <p class="card-text" id="player-{{ hrac.id }}-stats">
+                            Goals: {{ stats.goly }}<br>
+                           
+                            {% if stats.zlute_karty > 0 %}Yellow Cards: {{ stats.zlute_karty }}<br>{% endif %}
+                           
+                            {% if zapas.sport.jmeno != 'fotbal' and stats.trestne_minuty > 0 %}
+                                Penalty Minutes: {{ stats.trestne_minuty }}<br>
+                            {% endif %}
+                           
+                            {% if zapas.sport.jmeno == 'hazena' and stats.penalty_total_count > 0 %}
+                                Total Penalties: {{ stats.penalty_total_count }}<br>
+                            {% endif %}
+                           
+                            {% if stats.disqualified %}
+                                <span class="text-danger">Disqualified</span>
+                            {% endif %}
+                        </p>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#playerModal{{ hrac.id }}">
+                            Add Stats
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% include 'zapasy/modal.html' with player=hrac stats=stats zapas=zapas %}
+            {% endwith %}
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    const initialPenalties = JSON.parse(document.getElementById('penalties-data').textContent);
+</script>
+
+{% csrf_token %}
+<script src="{% static 'js/core.js' %}"></script>
+<script src="{% static 'js/control.js' %}"></script>
+<script src="{% static 'js/penalty.js' %}"></script>
+{% endblock %}
+
+

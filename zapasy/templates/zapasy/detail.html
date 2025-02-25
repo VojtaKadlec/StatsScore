@@ -1,34 +1,274 @@
 {% extends 'zapasy/base.html' %}
+{% load filter %}
+{% load static %}
 
 {% block content %}
-<div class="container mt-5">
-    <h2>Detail Zápasu</h2>
-
-    <div class="card text-white bg-dark mb-3">
-        <div class="card-header">
-            <h3>{{ zapas.sport.jmeno }}</h3>
+<div class="container mt-4" data-sport="{{ zapas.sport.jmeno }}" data-match-id="{{ zapas.id }}" data-timer-running="{{ timer_running }}" data-elapsed-time="{{ elapsed_time }}">
+    
+    <div class="card mb-4 shadow">
+        <div class="card-header bg-primary text-white">
+            <div class="row align-items-center">
+                <div class="col-md-4 text-md-start text-center">
+                    <h3 class="mb-0">{{ zapas.domaci.jmeno }}</h3>
+                </div>
+                <div class="col-md-4 text-center">
+                    <div class="display-4 fw-bold">
+                        {% with domaci_score=stats|sum_goals:zapas.domaci hoste_score=stats|sum_goals:zapas.hoste %}
+                        <span class="text-light">{{ domaci_score }} - {{ hoste_score }}</span>
+                        {% endwith %}
+                    </div>
+                    <span id="match-status" class="badge 
+                          {% if zapas.status == 'probihajici' %}bg-danger{% elif zapas.status == 'paused' %}bg-warning{% elif zapas.status == 'ukoncene' %}bg-success{% else %}bg-info{% endif %} mb-2">
+                        {{ zapas.get_status_display }}
+                    </span>
+                </div>
+                <div class="col-md-4 text-md-end text-center">
+                    <h3 class="mb-0">{{ zapas.hoste.jmeno }}</h3>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-calendar-event me-2"></i>
+                        <span>{{ zapas.datum|date:"d.m.Y H:i" }}</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="bi bi-trophy me-2"></i>
+                        <span>{{ zapas.sport.jmeno }}</span>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 text-md-end">
+                    <div id="timer" class="fs-4 fw-bold">
+                        <i class="bi bi-stopwatch me-2"></i>
+                        Čas zápasu: <span id="elapsed-time">
+                            {% with minutes=elapsed_time|div:60 seconds=elapsed_time|mod:60 %}
+                                {{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }}
+                            {% endwith %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">{{ zapas.domaci.jmeno }}</h4>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Jméno</th>
+                                    <th class="text-center">Góly</th>
+                                    {% if zapas.sport.jmeno == 'fotbal' %}
+                                    <th class="text-center">ŽK</th>
+                                    {% else %}
+                                    <th class="text-center">Tresty</th>
+                                    {% endif %}
+                                    <th class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for hrac in zapas.domaci.hraci.all %}
+                                    {% with player_stats|get_stat:hrac.id as stats %}
+                                    <tr>
+                                        <td>{{ hrac.cislo }}</td>
+                                        <td>{{ hrac.jmeno }}</td>
+                                        <td class="text-center">{{ stats.goly }}</td>
+                                        {% if zapas.sport.jmeno == 'fotbal' %}
+                                        <td class="text-center">{{ stats.zlute_karty }}</td>
+                                        {% else %}
+                                        <td class="text-center">{{ stats.trestne_minuty }}</td>
+                                        {% endif %}
+                                        <td class="text-center">
+                                            {% if stats.disqualified %}
+                                            <span class="badge bg-danger">DQ</span>
+                                            {% elif stats.trestne_minuty > 0 and zapas.sport.jmeno != 'fotbal' %}
+                                            <span class="badge bg-warning text-dark penalty-timer" data-player-id="{{ hrac.id }}">
+                                                {{ stats.trestne_minuty }}m
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endwith %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="mb-0">{{ zapas.hoste.jmeno }}</h4>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>Jméno</th>
+                                    <th class="text-center">Góly</th>
+                                    {% if zapas.sport.jmeno == 'fotbal' %}
+                                    <th class="text-center">ŽK</th>
+                                    {% else %}
+                                    <th class="text-center">Tresty</th>
+                                    {% endif %}
+                                    <th class="text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for hrac in zapas.hoste.hraci.all %}
+                                    {% with player_stats|get_stat:hrac.id as stats %}
+                                    <tr>
+                                        <td>{{ hrac.cislo }}</td>
+                                        <td>{{ hrac.jmeno }}</td>
+                                        <td class="text-center">{{ stats.goly }}</td>
+                                        {% if zapas.sport.jmeno == 'fotbal' %}
+                                        <td class="text-center">{{ stats.zlute_karty }}</td>
+                                        {% else %}
+                                        <td class="text-center">{{ stats.trestne_minuty }}</td>
+                                        {% endif %}
+                                        <td class="text-center">
+                                            {% if stats.disqualified %}
+                                            <span class="badge bg-danger">DQ</span>
+                                            {% elif stats.trestne_minuty > 0 and zapas.sport.jmeno != 'fotbal' %}
+                                            <span class="badge bg-warning text-dark penalty-timer" data-player-id="{{ hrac.id }}">
+                                                {{ stats.trestne_minuty }}m
+                                            </span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endwith %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="penalty-box" class="card shadow mb-4">
+        <div class="card-header bg-warning text-dark">
+            <h4 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Trestná lavice</h4>
+        </div>
+        <div class="card-body" id="penalty-container">
+            <div class="text-center text-muted" id="no-penalties-message">
+                Momentálně žádné tresty
+            </div>
+        </div>
+    </div>
+    
+    <div class="card shadow mb-4">
+        <div class="card-header bg-dark text-white">
+            <h4 class="mb-0">Statistiky zápasu</h4>
         </div>
         <div class="card-body">
-            <p><strong>Domácí tým:</strong> {{ zapas.domaci.jmeno }}</p>
-            <p><strong>Hostující tým:</strong> {{ zapas.hoste.jmeno }}</p>
-            <p><strong>Datum:</strong> {{ zapas.datum|date:"d.m.Y" }}</p>
-            <p><strong>Stav zápasu:</strong> {{ zapas.status|capfirst }}</p>
+            <div class="row">
+                {% with domaci_stats=stats|team_stats:zapas.domaci hoste_stats=stats|team_stats:zapas.hoste %}
+                <div class="col-md-4 text-center">
+                    <h5>{{ zapas.domaci.jmeno }}</h5>
+                    <div class="display-3">{{ domaci_stats.goals }}</div>
+                    <p>Góly</p>
+                    
+                    {% if zapas.sport.jmeno == 'fotbal' %}
+                    <div class="mt-3">
+                        <span class="d-inline-block p-2 bg-warning" style="width: 50px;"></span>
+                        <span class="ms-2">{{ domaci_stats.yellow_cards }}</span>
+                    </div>
+                    {% else %}
+                    <div class="mt-3">
+                        <span class="badge bg-danger p-2">{{ domaci_stats.penalty_minutes }}</span>
+                        <p class="mt-1">Trestné minuty</p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-4 text-center">
+                    <h5>Srovnání</h5>
+                    <div class="progress mb-3" style="height: 25px;">
+                        {% with total_goals=domaci_stats.goals|add:hoste_stats.goals %}
+                        {% if total_goals > 0 %}
+                            {% with domaci_percent=domaci_stats.goals|mul:100|div:total_goals %}
+                            <div id="domaci-progress" class="progress-bar bg-primary" role="progressbar" 
+                                 data-width="{{ domaci_percent }}">
+                                {{ domaci_stats.goals }}
+                            </div>
+                            {% endwith %}
+                            {% with hoste_percent=hoste_stats.goals|mul:100|div:total_goals %}
+                            <div id="hoste-progress" class="progress-bar bg-danger" role="progressbar" 
+                                 data-width="{{ hoste_percent }}">
+                                {{ hoste_stats.goals }}
+                            </div>
+                            {% endwith %}
+                        {% else %}
+                            <div class="progress-bar" role="progressbar" style="width: 0%">
+                                0
+                            </div>
+                        {% endif %}
+                        {% endwith %}
+                    </div>
+                </div>
+                
+                <div class="col-md-4 text-center">
+                    <h5>{{ zapas.hoste.jmeno }}</h5>
+                    <div class="display-3">{{ hoste_stats.goals }}</div>
+                    <p>Góly</p>
+                    
+                    {% if zapas.sport.jmeno == 'fotbal' %}
+                    <div class="mt-3">
+                        <span class="d-inline-block p-2 bg-warning" style="width: 50px;"></span>
+                        <span class="ms-2">{{ hoste_stats.yellow_cards }}</span>
+                    </div>
+                    {% else %}
+                    <div class="mt-3">
+                        <span class="badge bg-danger p-2">{{ hoste_stats.penalty_minutes }}</span>
+                        <p class="mt-1">Trestné minuty</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endwith %}
+            </div>
         </div>
     </div>
-
-    {% if zapas.status == "probihajici" %}
-    <div class="alert alert-warning" role="alert">
-        Tento zápas je momentálně probíhající.
-    </div>
-    {% elif zapas.status == "ukoncene" %}
-    <div class="alert alert-success" role="alert">
-        Tento zápas byl ukončen.
-    </div>
-    {% elif zapas.status == "nadchazejici" %}
-    <div class="alert alert-info" role="alert">
-        Tento zápas je nadcházející.
-    </div>
-    {% endif %}
 </div>
-{% endblock %}
 
+<div id="penalties-data" style="display: none;">
+    {% if active_penalties %}{{ active_penalties|safe }}{% else %}[]{% endif %}
+</div>
+
+<script>
+    const initialPenalties = JSON.parse(document.getElementById('penalties-data').textContent);
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const domaciProgress = document.getElementById('domaci-progress');
+        const hosteProgress = document.getElementById('hoste-progress');
+        
+        if (domaciProgress) {
+            domaciProgress.style.width = domaciProgress.getAttribute('data-width') + '%';
+        }
+        
+        if (hosteProgress) {
+            hosteProgress.style.width = hosteProgress.getAttribute('data-width') + '%';
+        }
+    });
+
+</script>
+
+{% csrf_token %}
+<script src="{% static 'js/core.js' %}"></script>
+<script src="{% static 'js/view-detail.js' %}"></script>
+{% endblock %}
