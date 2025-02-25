@@ -1,0 +1,92 @@
+<div class="modal fade" id="playerModal{{ player.id }}" tabindex="-1" aria-labelledby="playerModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="playerModalLabel">Stats: {{ player.jmeno }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" id="stats-form-{{ player.id }}">
+                    {% csrf_token %}
+                    <input type="hidden" name="hrac" value="{{ player.id }}">
+                    <input type="hidden" name="action" value="update_stats">
+                   
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Goals</label>
+                        <div class="input-group">
+                            <button type="button" class="btn btn-outline-danger" onclick="updateCounter('goals-{{ player.id }}', -1)">-</button>
+                            <input type="number" class="form-control text-center" id="goals-{{ player.id }}" name="goly" value="{{ stats.goly }}" readonly>
+                            <button type="button" class="btn btn-outline-success" onclick="updateCounter('goals-{{ player.id }}', 1)">+</button>
+                        </div>
+                    </div>
+                   
+                    {% if zapas.sport.jmeno == 'fotbal' %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Yellow Cards</label>
+                        <div class="input-group">
+                            <button type="button" class="btn btn-outline-danger" onclick="updateCounter('yellow-cards-{{ player.id }}', -1)">-</button>
+                            <input type="number" class="form-control text-center" id="yellow-cards-{{ player.id }}" name="zlute_karty" value="{{ stats.zlute_karty }}" readonly>
+                            <button type="button" class="btn btn-outline-warning" onclick="updateCounter('yellow-cards-{{ player.id }}', 1)">+</button>
+                        </div>
+                    </div>
+                   
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-danger" onclick="addRedCard('{{ player.id }}')">
+                            <i class="bi bi-card-fill"></i> Red Card
+                        </button>
+                        <small class="text-muted ms-2">(Direct red card, player disqualified)</small>
+                    </div>
+                   
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="disqualified-{{ player.id }}" name="disqualified" {% if stats.disqualified %}checked{% endif %}>
+                        <label class="form-check-label" for="disqualified-{{ player.id }}">
+                            Player Disqualified
+                        </label>
+                    </div>
+                   
+                    <input type="hidden" id="penalty-{{ player.id }}" name="trestne_minuty" value="0">
+                   
+                    {% elif zapas.sport.jmeno == 'hazena' %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Penalty Minutes</label>
+                        <div class="input-group">
+                            <button type="button" class="btn btn-outline-danger" onclick="updateCounter('penalty-{{ player.id }}', -2)">-2m</button>
+                            <input type="number" class="form-control text-center" id="penalty-{{ player.id }}" name="trestne_minuty" value="{{ stats.trestne_minuty }}" readonly>
+                            <button type="button" class="btn btn-outline-warning" onclick="updateCounter('penalty-{{ player.id }}', 2)">+2m</button>
+                        </div>
+                    </div>
+                   
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-danger" onclick="addRedCardHandball('{{ player.id }}')">
+                            <i class="bi bi-card-fill"></i> Red Card
+                        </button>
+                        <small class="text-muted ms-2">(Team weakened for 2m, player disqualified)</small>
+                    </div>
+                   
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="disqualified-{{ player.id }}" name="disqualified" {% if stats.disqualified %}checked{% endif %}>
+                        <label class="form-check-label" for="disqualified-{{ player.id }}">
+                            Player Disqualified
+                        </label>
+                    </div>
+                   
+                    {% elif zapas.sport.jmeno == 'hokej' %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Penalty Minutes</label>
+                        <div class="input-group">
+                            <button type="button" class="btn btn-outline-danger" onclick="updateCounter('penalty-{{ player.id }}', -2)">-2m</button>
+                            <input type="number" class="form-control text-center" id="penalty-{{ player.id }}" name="trestne_minuty" value="{{ stats.trestne_minuty }}" readonly>
+                            <button type="button" class="btn btn-outline-warning" onclick="updateCounter('penalty-{{ player.id }}', 2)">+2m</button>
+                            <button type="button" class="btn btn-outline-danger" onclick="updateCounter('penalty-{{ player.id }}', 5)">+5m</button>
+                        </div>
+                    </div>
+                    {% endif %}
+                   
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
