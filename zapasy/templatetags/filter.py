@@ -17,3 +17,21 @@ def mod(value, arg):
 @register.filter
 def mul(value, arg):
     return value * arg
+
+@register.filter
+def sum_goals(stats, team):
+    team_player_ids = [player.id for player in team.hraci.all()]
+    total_goals = sum(
+        stat.goly for stat in stats if stat.hrac.id in team_player_ids
+    )
+    return total_goals
+
+@register.filter
+def team_stats(stats, team):
+    team_player_ids = [player.id for player in team.hraci.all()]
+    team_stats = {
+        'goals': sum(stat.goly for stat in stats if stat.hrac.id in team_player_ids),
+        'yellow_cards': sum(stat.zlute_karty for stat in stats if stat.hrac.id in team_player_ids),
+        'penalty_minutes': sum(stat.trestne_minuty for stat in stats if stat.hrac.id in team_player_ids)
+    }
+    return team_stats

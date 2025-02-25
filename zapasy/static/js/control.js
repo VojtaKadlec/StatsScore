@@ -4,13 +4,15 @@ function updateCounter(elementId, change) {
         console.error('Element not found:', elementId);
         return;
     }
-   
+    
     let value = parseInt(input.value) || 0;
     value += change;
-   
+    
+  
     if (value < 0) value = 0;
-   
+    
     input.value = value;
+    
    
     if (elementId.startsWith('yellow-cards-') && value >= 2) {
         const playerId = elementId.split('-')[2];
@@ -21,6 +23,7 @@ function updateCounter(elementId, change) {
     }
 }
 
+
 function addRedCard(playerId) {
     const disqualifiedCheckbox = document.getElementById(`disqualified-${playerId}`);
     if (disqualifiedCheckbox) {
@@ -28,8 +31,11 @@ function addRedCard(playerId) {
     }
 }
 
+
 function addRedCardHandball(playerId) {
+  
     updateCounter(`penalty-${playerId}`, 2);
+    
    
     const disqualifiedCheckbox = document.getElementById(`disqualified-${playerId}`);
     if (disqualifiedCheckbox) {
@@ -37,50 +43,60 @@ function addRedCardHandball(playerId) {
     }
 }
 
+
 function updatePlayerStatsDisplay(playerId, stats) {
     const statsElem = document.getElementById(`player-${playerId}-stats`);
     const sportName = document.querySelector('[data-sport]')?.getAttribute('data-sport') || '';
-   
+    
     if (statsElem) {
         let statsHTML = `Goals: ${stats.goly}<br>`;
-       
+        
+        
         if ('zlute_karty' in stats && stats.zlute_karty > 0) {
             statsHTML += `Yellow Cards: ${stats.zlute_karty}<br>`;
         }
-       
+        
+    
         if (sportName !== 'fotbal' && 'trestne_minuty' in stats && stats.trestne_minuty > 0) {
             statsHTML += `Penalty Minutes: ${stats.trestne_minuty}<br>`;
         }
-       
+        
+        
         if (sportName === 'hazena' && stats.penalty_total_count > 0) {
             statsHTML += `Total Penalties: ${stats.penalty_total_count}<br>`;
         }
-       
+        
+        
         if ('disqualified' in stats && stats.disqualified) {
             statsHTML += `<span class="text-danger">Disqualified</span>`;
         }
-       
+        
         statsElem.innerHTML = statsHTML;
     }
 }
 
+
 document.addEventListener('DOMContentLoaded', function() {
+    
     if (!window.matchCore) {
         console.error('core.js must be loaded before control.js');
         return;
     }
-   
+    
+    
     const statsForms = document.querySelectorAll('form[id^="stats-form-"]');
     statsForms.forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
             const formData = new FormData(this);
             const formDataObj = {};
-           
+            
+          
             for (let [key, value] of formData.entries()) {
                 formDataObj[key] = value;
             }
-           
+            
+        
             fetch(window.location.href, {
                 method: 'POST',
                 headers: {
@@ -92,14 +108,17 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.json())
             .then(data => {
+                
                 const modal = bootstrap.Modal.getInstance(document.getElementById(`playerModal${formDataObj.hrac}`));
                 if (modal) {
                     modal.hide();
                 }
-               
+                
+                
                 if (data.player_stats && data.player_stats[formDataObj.hrac]) {
                     updatePlayerStatsDisplay(formDataObj.hrac, data.player_stats[formDataObj.hrac]);
-                   
+                    
+                    
                     if (data.player_stats[formDataObj.hrac].trestne_minuty > 0) {
                         const penaltyEvent = new CustomEvent('penaltyUpdated', {
                             detail: {
@@ -116,7 +135,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     });
-   
+    
+    
     window.updateCounter = updateCounter;
     window.addRedCard = addRedCard;
     window.addRedCardHandball = addRedCardHandball;

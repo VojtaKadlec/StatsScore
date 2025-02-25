@@ -33,17 +33,17 @@
                         <h5 class="card-title">{{ hrac.jmeno }}</h5>
                         <p class="card-text" id="player-{{ hrac.id }}-stats">
                             Goals: {{ stats.goly }}<br>
-                           
+                            
                             {% if stats.zlute_karty > 0 %}Yellow Cards: {{ stats.zlute_karty }}<br>{% endif %}
-                           
+                            
                             {% if zapas.sport.jmeno != 'fotbal' and stats.trestne_minuty > 0 %}
                                 Penalty Minutes: {{ stats.trestne_minuty }}<br>
                             {% endif %}
-                           
+                            
                             {% if zapas.sport.jmeno == 'hazena' and stats.penalty_total_count > 0 %}
                                 Total Penalties: {{ stats.penalty_total_count }}<br>
                             {% endif %}
-                           
+                            
                             {% if stats.disqualified %}
                                 <span class="text-danger">Disqualified</span>
                             {% endif %}
@@ -69,17 +69,17 @@
                         <h5 class="card-title">{{ hrac.jmeno }}</h5>
                         <p class="card-text" id="player-{{ hrac.id }}-stats">
                             Goals: {{ stats.goly }}<br>
-                           
+                            
                             {% if stats.zlute_karty > 0 %}Yellow Cards: {{ stats.zlute_karty }}<br>{% endif %}
-                           
+                            
                             {% if zapas.sport.jmeno != 'fotbal' and stats.trestne_minuty > 0 %}
                                 Penalty Minutes: {{ stats.trestne_minuty }}<br>
                             {% endif %}
-                           
+                            
                             {% if zapas.sport.jmeno == 'hazena' and stats.penalty_total_count > 0 %}
                                 Total Penalties: {{ stats.penalty_total_count }}<br>
                             {% endif %}
-                           
+                            
                             {% if stats.disqualified %}
                                 <span class="text-danger">Disqualified</span>
                             {% endif %}
@@ -96,11 +96,14 @@
     </div>
 </div>
 
+
 <script>
     const initialPenalties = JSON.parse(document.getElementById('penalties-data').textContent);
 </script>
 
-{% csrf_token %}
+
+
+{% csrf_token %} 
 <script src="{% static 'js/core.js' %}"></script>
 <script src="{% static 'js/control.js' %}"></script>
 <script src="{% static 'js/penalty.js' %}"></script>

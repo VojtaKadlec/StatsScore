@@ -11,11 +11,11 @@ class Stats(models.Model):
     penalty_start_time = models.DateTimeField(null=True, blank=True)
     penalty_total_count = models.IntegerField(default=0)
     disqualified = models.BooleanField(default=False)
-
+    
     class Meta:
         unique_together = ('zapas', 'hrac')
 
-    def str(self):
+    def __str__(self):
         return f"{self.hrac} [{self.zapas}]"
       
 

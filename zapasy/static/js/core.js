@@ -8,7 +8,7 @@ function updateTimerDisplay() {
         timerElement = document.getElementById('elapsed-time');
         if (!timerElement) return;
     }
-   
+    
     const minutes = Math.floor(elapsedTime / 60);
     const seconds = elapsedTime % 60;
     timerElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
@@ -36,9 +36,9 @@ function updateButtonStates(status) {
     const startBtn = document.querySelector('button[onclick="performAction(\'start\')"]');
     const pauseBtn = document.querySelector('button[onclick="performAction(\'pause\')"]');
     const endBtn = document.querySelector('button[onclick="performAction(\'end\')"]');
-   
+    
     if (!startBtn || !pauseBtn || !endBtn) return;
-   
+    
     if (status === 'probihajici') {
         startBtn.classList.add('disabled');
         pauseBtn.classList.remove('disabled');
@@ -75,27 +75,27 @@ function performAction(action) {
               if (statusElement) {
                   statusElement.textContent = data.status_display;
               }
-             
-              const event = new CustomEvent('matchStatusChanged', {
-                  detail: {
+              
+              const event = new CustomEvent('matchStatusChanged', { 
+                  detail: { 
                       status: data.status,
                       statusDisplay: data.status_display
-                  }
+                  } 
               });
               document.dispatchEvent(event);
           }
-         
+          
           if (data.timer_running === true) {
               startTimer();
           } else if (data.timer_running === false) {
               stopTimer();
           }
-         
+          
           if (data.elapsed_time !== undefined) {
               elapsedTime = data.elapsed_time;
               updateTimerDisplay();
           }
-         
+          
           updateButtonStates(data.status);
       })
       .catch(error => {
@@ -107,8 +107,8 @@ function getMatchStatusFromDisplay() {
     const statusElement = document.getElementById('match-status');
     if (statusElement) {
         const statusText = statusElement.textContent.toLowerCase();
-        return statusText.includes('probíhající') ? 'probihajici' :
-               statusText.includes('pozastaven') ? 'paused' :
+        return statusText.includes('probíhající') ? 'probihajici' : 
+               statusText.includes('pozastaven') ? 'paused' : 
                statusText.includes('ukončen') ? 'ukoncene' : 'nadchazejici';
     }
     return 'unknown';
@@ -122,21 +122,21 @@ document.addEventListener('DOMContentLoaded', function() {
     timerElement = document.getElementById('elapsed-time');
     const timerRunning = document.body.getAttribute('data-timer-running') === 'True';
     const initialTime = parseInt(document.body.getAttribute('data-elapsed-time') || '0', 10);
-   
+    
     if (initialTime) {
         elapsedTime = initialTime;
     }
-   
+    
     matchStatus = getMatchStatusFromDisplay();
-   
+    
     if (timerRunning) {
         startTimer();
     } else {
         updateTimerDisplay();
     }
-   
+    
     updateButtonStates(matchStatus);
-   
+    
     const statusElement = document.getElementById('match-status');
     if (statusElement) {
         const observer = new MutationObserver(function(mutations) {
@@ -145,19 +145,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     const newStatus = getMatchStatusFromDisplay();
                     if (newStatus !== matchStatus) {
                         matchStatus = newStatus;
-                       
-                        const event = new CustomEvent('matchStatusChanged', {
-                            detail: {
+                        
+                        const event = new CustomEvent('matchStatusChanged', { 
+                            detail: { 
                                 status: matchStatus,
                                 statusDisplay: statusElement.textContent
-                            }
+                            } 
                         });
                         document.dispatchEvent(event);
                     }
                 }
             });
         });
-       
+        
         observer.observe(statusElement, {
             characterData: true,
             childList: true,
@@ -165,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
 
 window.matchCore = {
     updateTimerDisplay,

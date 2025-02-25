@@ -22,8 +22,16 @@ def home(request):
 
 def zapas(request, zapas_id):
     zapas = get_object_or_404(Zapas, id=zapas_id)
-    stats = Stats.objects.filter(zapas=zapas)
-    return render(request, 'zapasy/detail.html', {'zapas': zapas, 'stats': stats})
+    stats_queryset = Stats.objects.filter(zapas=zapas)
+    
+
+    player_stats = {stat.hrac_id: stat for stat in stats_queryset}
+    
+    return render(request, 'zapasy/detail.html', {
+        'zapas': zapas, 
+        'stats': stats_queryset,
+        'player_stats': player_stats  
+    })
 
 def liga(request, liga_id):
     liga = get_object_or_404(Liga, id=liga_id)
@@ -34,17 +42,17 @@ def liga(request, liga_id):
 @user_passes_test(lambda u: u.is_superuser)
 def control_match(request, zapas_id):
     zapas = get_object_or_404(Zapas, id=zapas_id)
-   
+    
     players = list(zapas.domaci.hraci.all()) + list(zapas.hoste.hraci.all())
     for player in players:
         Stats.objects.get_or_create(zapas=zapas, hrac=player)
-   
+    
     stats = Stats.objects.filter(zapas=zapas)
-    player_stats = {stat.hrac.id: stat for stat in stats}
-   
+    player_stats = {stat.hrac.id: stat for stat in stats}  
+    
     timer_running = zapas.status == 'probihajici'
     elapsed_time = zapas.elapsed_time
-   
+    
     if request.method == 'POST':
         action = request.POST.get('action')
         if action == 'start':
@@ -55,7 +63,7 @@ def control_match(request, zapas_id):
                 timer_running = True
             elif zapas.status == 'paused':
                 zapas.status = 'probihajici'
-                zapas.start_time = timezone.now()
+                zapas.start_time = timezone.now() 
                 zapas.pause_time = None
                 zapas.save()
                 timer_running = True
@@ -77,39 +85,39 @@ def control_match(request, zapas_id):
         elif action == 'update_stats':
             player_id = int(request.POST.get('hrac'))
             stat = player_stats.get(player_id)
-           
+            
             if stat:
                 previous_penalty = stat.trestne_minuty
-               
+                
                 stat.goly = int(request.POST.get('goly', 0))
-               
+                
                 if 'zlute_karty' in request.POST:
                     stat.zlute_karty = int(request.POST.get('zlute_karty', 0))
-               
+                
                 if 'trestne_minuty' in request.POST:
                     new_penalty = int(request.POST.get('trestne_minuty', 0))
                     stat.trestne_minuty = new_penalty
-                   
+                    
                     if new_penalty > previous_penalty and new_penalty > 0:
                         stat.penalty_start_time = timezone.now()
-                       
+                        
                         if zapas.sport.jmeno == 'hazena':
                             stat.penalty_total_count += 1
                             if stat.penalty_total_count >= 3:
                                 stat.disqualified = True
-               
+                
                 stat.disqualified = request.POST.get('disqualified') == 'on'
-               
+                
                 stat.save()
         elif action == 'reset_penalty':
             player_id = int(request.POST.get('hrac'))
             stat = player_stats.get(player_id)
-           
+            
             if stat:
                 stat.trestne_minuty = 0
             stat.penalty_start_time = None
             stat.save()
-           
+            
             return JsonResponse({
                 'success': True,
                 'player_id': player_id,
@@ -121,12 +129,12 @@ def control_match(request, zapas_id):
                     'disqualified': stat.disqualified
                 }
             })
-       
+        
         calculated_elapsed_time = zapas.elapsed_time
         if zapas.status == 'probihajici' and zapas.start_time:
             current_session_time = int((timezone.now() - zapas.start_time).total_seconds())
             calculated_elapsed_time += current_session_time
-       
+        
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'action' in request.POST:
             player_stats_data = {}
             for player_id, stat in player_stats.items():
@@ -137,7 +145,7 @@ def control_match(request, zapas_id):
                     'penalty_total_count': getattr(stat, 'penalty_total_count', 0),
                     'disqualified': stat.disqualified
                 }
-           
+            
             return JsonResponse({
                 'status': zapas.status,
                 'status_display': zapas.get_status_display(),
@@ -145,35 +153,35 @@ def control_match(request, zapas_id):
                 'elapsed_time': calculated_elapsed_time,
                 'player_stats': player_stats_data
             })
-   
+    
     calculated_elapsed_time = elapsed_time
     if zapas.status == 'probihajici' and zapas.start_time:
         current_session_time = int((timezone.now() - zapas.start_time).total_seconds())
         calculated_elapsed_time += current_session_time
-   
+    
     active_penalties = []
     for player_id, stat in player_stats.items():
         if stat.trestne_minuty > 0 and stat.penalty_start_time:
             elapsed = timezone.now() - stat.penalty_start_time
             penalty_duration = datetime.timedelta(minutes=stat.trestne_minuty)
-           
+            
             if elapsed < penalty_duration:
                 remaining_seconds = (penalty_duration - elapsed).total_seconds()
                 remaining_minutes = remaining_seconds / 60
-               
+                
                 player = get_object_or_404(Hrac, id=player_id)
                 team_type = 'Domácí' if player.team == zapas.domaci else 'Hosté'
-               
+                
                 active_penalties.append({
                     'player_id': player_id,
                     'player_number': player.cislo,
                     'team_type': team_type,
                     'remaining_minutes': remaining_minutes
                 })
-   
+    
     goal_form = GoalForm()
     card_form = CardForm()
-   
+    
     context = {
         'zapas': zapas,
         'player_stats': player_stats,

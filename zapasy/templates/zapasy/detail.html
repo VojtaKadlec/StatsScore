@@ -45,9 +45,9 @@
                     <div id="timer" class="fs-4 fw-bold">
                         <i class="bi bi-stopwatch me-2"></i>
                         Čas zápasu: <span id="elapsed-time">
-                            {% with minutes=elapsed_time|div:60 seconds=elapsed_time|mod:60 %}
-                                {{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }}
-                            {% endwith %}
+                        {% with minutes=elapsed_time|default:"0"|div:60 seconds=elapsed_time|default:"0"|mod:60 %}
+                            {{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }}
+                        {% endwith %}
                         </span>
                     </div>
                 </div>
@@ -87,7 +87,7 @@
                                         {% if zapas.sport.jmeno == 'fotbal' %}
                                         <td class="text-center">{{ stats.zlute_karty }}</td>
                                         {% else %}
-                                        <td class="text-center">{{ stats.trestne_minuty }}</td>
+                                        <td class="text-center">{{ stats.penalty_total_count }}</td>
                                         {% endif %}
                                         <td class="text-center">
                                             {% if stats.disqualified %}
@@ -139,7 +139,7 @@
                                         {% if zapas.sport.jmeno == 'fotbal' %}
                                         <td class="text-center">{{ stats.zlute_karty }}</td>
                                         {% else %}
-                                        <td class="text-center">{{ stats.trestne_minuty }}</td>
+                                        <td class="text-center">{{ stats.penalty_total_count }}</td>
                                         {% endif %}
                                         <td class="text-center">
                                             {% if stats.disqualified %}
@@ -270,5 +270,5 @@
 
 {% csrf_token %}
 <script src="{% static 'js/core.js' %}"></script>
-<script src="{% static 'js/view-detail.js' %}"></script>
+<script src="{% static 'js/detail.js' %}"></script>
 {% endblock %}

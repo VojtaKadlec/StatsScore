@@ -11,14 +11,14 @@ class Zapas(models.Model):
         choices=[
             ("nadchazejici", "Nadcházející"),
             ("probihajici", "Probíhající"),
-            ("paused", "Pozastaveno"),
+            ("paused", "Pozastaveno"),  # Add a paused status
             ("ukoncene", "Ukončené")
         ],
         max_length=20
     )
     start_time = models.DateTimeField(null=True, blank=True)
-    pause_time = models.DateTimeField(null=True, blank=True)
-    elapsed_time = models.IntegerField(default=0)
+    pause_time = models.DateTimeField(null=True, blank=True)  # Add this field
+    elapsed_time = models.IntegerField(default=0)  # Add this field (in seconds)
 
     def __str__(self):
         return f"{self.domaci} - {self.hoste}"

@@ -15,12 +15,12 @@ function addPlayerPenalty(playerId, playerNumber, minutes, teamType = null, star
             penaltyTimers[playerId].element.parentNode.removeChild(penaltyTimers[playerId].element);
         }
     }
-   
+    
     const alertElement = document.createElement('div');
     alertElement.id = `penalty-alert-${playerId}`;
     alertElement.className = 'alert alert-danger mt-2 d-flex justify-content-between align-items-center';
     alertElement.role = 'alert';
-   
+    
     if (!teamType) {
         const playerCard = document.querySelector(`[data-bs-target="#playerModal${playerId}"]`)?.closest('.card');
         if (playerCard) {
@@ -30,20 +30,20 @@ function addPlayerPenalty(playerId, playerNumber, minutes, teamType = null, star
             teamType = 'Player';
         }
     }
-   
+    
     const seconds = Math.round(minutes * 60);
     const isMatchRunning = globalMatchStatus === 'probihajici';
-    const endTime = (isMatchRunning && startNow) ?
-                      Date.now() + (seconds * 1000) :
+    const endTime = (isMatchRunning && startNow) ? 
+                      Date.now() + (seconds * 1000) : 
                       null;
-   
+    
     const alertContent = document.createElement('div');
     alertContent.innerHTML = `
-        <strong>${teamType} #${playerNumber}</strong> -
+        <strong>${teamType} #${playerNumber}</strong> - 
         <span id="penalty-time-${playerId}">${formatTime(seconds)}</span>
         ${!isMatchRunning ? '<span class="badge bg-warning ms-2">PAUSED</span>' : ''}
     `;
-   
+    
     const dismissButton = document.createElement('button');
     dismissButton.type = 'button';
     dismissButton.className = 'btn-close';
@@ -57,17 +57,17 @@ function addPlayerPenalty(playerId, playerNumber, minutes, teamType = null, star
             delete penaltyTimers[playerId];
         }
     };
-   
+    
     alertElement.appendChild(alertContent);
     alertElement.appendChild(dismissButton);
-   
+    
     const timerDisplay = document.getElementById('timer');
     if (timerDisplay) {
         timerDisplay.after(alertElement);
     } else {
         document.querySelector('.container').appendChild(alertElement);
     }
-   
+    
     penaltyTimers[playerId] = {
         interval: null,
         element: alertElement,
@@ -75,7 +75,7 @@ function addPlayerPenalty(playerId, playerNumber, minutes, teamType = null, star
         remainingSeconds: seconds,
         started: isMatchRunning && startNow
     };
-   
+    
     if (isMatchRunning && startNow) {
         startPenaltyTimer(playerId);
     }
@@ -84,16 +84,16 @@ function addPlayerPenalty(playerId, playerNumber, minutes, teamType = null, star
 function startPenaltyTimer(playerId) {
     const penaltyTimer = penaltyTimers[playerId];
     if (!penaltyTimer) return;
-   
+    
     if (penaltyTimer.interval) {
         clearInterval(penaltyTimer.interval);
     }
-   
+    
     if (!penaltyTimer.started) {
         penaltyTimer.endTime = Date.now() + (penaltyTimer.remainingSeconds * 1000);
         penaltyTimer.started = true;
     }
-   
+    
     const timeDisplay = document.getElementById(`penalty-time-${playerId}`);
     if (timeDisplay) {
         const pauseBadge = timeDisplay.nextElementSibling;
@@ -101,17 +101,17 @@ function startPenaltyTimer(playerId) {
             pauseBadge.remove();
         }
     }
-   
+    
     penaltyTimer.interval = setInterval(() => {
         const remainingMs = penaltyTimer.endTime - Date.now();
         const timeDisplay = document.getElementById(`penalty-time-${playerId}`);
-       
+        
         if (remainingMs <= 0 || !timeDisplay) {
             clearInterval(penaltyTimer.interval);
             if (penaltyTimer.element.parentNode) {
                 penaltyTimer.element.parentNode.removeChild(penaltyTimer.element);
             }
-           
+            
             fetch(window.location.href, {
                 method: 'POST',
                 headers: {
@@ -127,7 +127,7 @@ function startPenaltyTimer(playerId) {
                 if (penaltyInput) {
                     penaltyInput.value = 0;
                 }
-               
+                
                 const statsElem = document.getElementById(`player-${playerId}-stats`);
                 if (statsElem) {
                     const penaltyText = statsElem.innerHTML.match(/Penalty Minutes: \d+<br>/);
@@ -137,11 +137,11 @@ function startPenaltyTimer(playerId) {
                 }
             })
             .catch(error => console.error('Error resetting penalty:', error));
-           
+            
             delete penaltyTimers[playerId];
         } else {
             timeDisplay.textContent = formatTime(Math.ceil(remainingMs / 1000));
-           
+            
             penaltyTimer.remainingSeconds = Math.ceil(remainingMs / 1000);
         }
     }, 1000);
@@ -150,17 +150,17 @@ function startPenaltyTimer(playerId) {
 function pauseAllPenaltyTimers() {
     Object.keys(penaltyTimers).forEach(playerId => {
         const penaltyTimer = penaltyTimers[playerId];
-       
+        
         if (penaltyTimer.interval) {
             clearInterval(penaltyTimer.interval);
             penaltyTimer.interval = null;
         }
-       
+        
         if (penaltyTimer.started && penaltyTimer.endTime) {
             const remainingMs = penaltyTimer.endTime - Date.now();
             penaltyTimer.remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
         }
-       
+        
         const timeDisplay = document.getElementById(`penalty-time-${playerId}`);
         if (timeDisplay && !timeDisplay.nextElementSibling?.classList.contains('badge')) {
             const pauseBadge = document.createElement('span');
@@ -179,7 +179,7 @@ function resumeAllPenaltyTimers() {
 
 function handleMatchStateChange(newState) {
     globalMatchStatus = newState;
-   
+    
     if (newState === 'probihajici') {
         resumeAllPenaltyTimers();
     } else {
@@ -190,43 +190,43 @@ function handleMatchStateChange(newState) {
 function trackHandballPenalty(playerId) {
     const sportName = document.querySelector('[data-sport]')?.getAttribute('data-sport') || '';
     if (sportName !== 'hazena') return;
-   
+    
     if (!handbaPenaltyCount[playerId]) {
         handbaPenaltyCount[playerId] = 0;
     }
-   
+    
     handbaPenaltyCount[playerId]++;
-   
+    
     if (handbaPenaltyCount[playerId] >= 3) {
         const disqualifiedCheckbox = document.getElementById(`disqualified-${playerId}`);
         if (disqualifiedCheckbox) {
             disqualifiedCheckbox.checked = true;
-           
+            
             const alertElement = document.createElement('div');
             alertElement.className = 'alert alert-danger mt-2';
-           
+            
             const playerCard = document.querySelector(`[data-bs-target="#playerModal${playerId}"]`)?.closest('.card');
             const playerName = playerCard ? playerCard.querySelector('.card-title').textContent.trim() : 'Player';
             const playerNumber = playerCard?.getAttribute('data-player-number') || '?';
-           
+            
             alertElement.innerHTML = `
                 <strong>Disqualification:</strong> Player #${playerNumber} (${playerName}) - Received 3 penalties
                 <button type="button" class="btn-close float-end" aria-label="Close"></button>
             `;
-           
+            
             alertElement.querySelector('.btn-close').addEventListener('click', function() {
                 if (alertElement.parentNode) {
                     alertElement.parentNode.removeChild(alertElement);
                 }
             });
-           
+            
             const timerDisplay = document.getElementById('timer');
             if (timerDisplay) {
                 timerDisplay.after(alertElement);
             } else {
                 document.querySelector('.container').appendChild(alertElement);
             }
-           
+            
             setTimeout(() => {
                 if (alertElement.parentNode) {
                     alertElement.parentNode.removeChild(alertElement);
@@ -241,50 +241,45 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('core.js must be loaded before penalty.js');
         return;
     }
-   
+    
     globalMatchStatus = window.matchCore.getMatchStatus();
-    document.addEventListener('DOMContentLoaded', function() {
-        if (!window.matchCore) {
-            console.error('core.js must be loaded before penalty.js');
-            return;
+    
+    document.addEventListener('matchStatusChanged', function(e) {
+        handleMatchStateChange(e.detail.status);
+    });
+    
+    document.addEventListener('penaltyUpdated', function(e) {
+        if (e.detail.penaltyMinutes > 0) {
+            setTimeout(() => {
+                const playerCard = document.querySelector(`[data-bs-target="#playerModal${e.detail.playerId}"]`)?.closest('.card');
+                if (!playerCard) return;
+                
+                const playerNumber = playerCard.getAttribute('data-player-number') || '?';
+                const section = playerCard.closest('div[class*="row"]').previousElementSibling;
+                const teamType = section.textContent.toLowerCase().includes('domá') ? 'Domácí' : 'Hosté';
+                
+            
+                addPlayerPenalty(e.detail.playerId, playerNumber, e.detail.penaltyMinutes, teamType);
+                
+        
+                trackHandballPenalty(e.detail.playerId);
+            }, 200);
         }
-       
-        globalMatchStatus = window.matchCore.getMatchStatus();
-       
-        document.addEventListener('matchStatusChanged', function(e) {
-            handleMatchStateChange(e.detail.status);
-        });
-       
-        document.addEventListener('penaltyUpdated', function(e) {
-            if (e.detail.penaltyMinutes > 0) {
-                setTimeout(() => {
-                    const playerCard = document.querySelector(`[data-bs-target="#playerModal${e.detail.playerId}"]`)?.closest('.card');
-                    if (!playerCard) return;
-                   
-                    const playerNumber = playerCard.getAttribute('data-player-number') || '?';
-                    const section = playerCard.closest('div[class*="row"]').previousElementSibling;
-                    const teamType = section.textContent.toLowerCase().includes('domá') ? 'Domácí' : 'Hosté';
-                   
-                    addPlayerPenalty(e.detail.playerId, playerNumber, e.detail.penaltyMinutes, teamType);
-                   
-                    trackHandballPenalty(e.detail.playerId);
-                }, 200);
-            }
-        });
-       
-        try {
-            if (typeof initialPenalties !== 'undefined' && initialPenalties && initialPenalties.length > 0) {
-                initialPenalties.forEach(penalty => {
-                    addPlayerPenalty(
-                        penalty.player_id,
-                        penalty.player_number,
-                        penalty.remaining_minutes,
-                        penalty.team_type,
-                        globalMatchStatus === 'probihajici'
-                    );
-                });
-            }
-        } catch (error) {
-            console.error('Error loading initial penalties:', error);
+    });
+    
+    try {
+        if (typeof initialPenalties !== 'undefined' && initialPenalties && initialPenalties.length > 0) {
+            initialPenalties.forEach(penalty => {
+                addPlayerPenalty(
+                    penalty.player_id,
+                    penalty.player_number, 
+                    penalty.remaining_minutes,
+                    penalty.team_type,
+                    globalMatchStatus === 'probihajici' 
+                );
+            });
         }
-    });});
+    } catch (error) {
+        console.error('Error loading initial penalties:', error);
+    }
+});
