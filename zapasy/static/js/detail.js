@@ -1,36 +1,58 @@
-const penaltyTimers = {};
+let displayedPenalties = {};
 let globalMatchStatus = 'unknown';
 let isAutoRefreshing = false;
 let refreshInterval = null;
 
-function formatTime(seconds) {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+
+function clearAllPenalties() {
+  
+    const penaltyContainer = document.getElementById('penalty-container');
+    if (!penaltyContainer) return;
+    
+   
+    Object.keys(displayedPenalties).forEach(playerId => {
+        const element = displayedPenalties[playerId].element;
+        if (element && element.parentNode) {
+            element.parentNode.removeChild(element);
+        }
+    });
+    
+   
+    displayedPenalties = {};
+    
+   
+    const noPenaltiesMessage = document.getElementById('no-penalties-message');
+    if (noPenaltiesMessage) {
+        noPenaltiesMessage.style.display = 'block';
+    }
 }
+
 
 function displayPenalty(playerId, playerNumber, playerName, teamName, minutes, teamColor) {
     const penaltyContainer = document.getElementById('penalty-container');
     const noPenaltiesMessage = document.getElementById('no-penalties-message');
     
+    if (!penaltyContainer) return;
+    
+    
     if (noPenaltiesMessage) {
         noPenaltiesMessage.style.display = 'none';
     }
     
-    if (penaltyTimers[playerId]) {
-        clearInterval(penaltyTimers[playerId].interval);
-        if (penaltyTimers[playerId].element && penaltyTimers[playerId].element.parentNode) {
-            penaltyTimers[playerId].element.parentNode.removeChild(penaltyTimers[playerId].element);
+    
+    if (displayedPenalties[playerId] && displayedPenalties[playerId].element) {
+        const existingElement = displayedPenalties[playerId].element;
+        if (existingElement.parentNode) {
+            existingElement.parentNode.removeChild(existingElement);
         }
     }
     
+  
     const penaltyElement = document.createElement('div');
     penaltyElement.id = `penalty-display-${playerId}`;
     penaltyElement.className = 'alert alert-light border d-flex justify-content-between align-items-center mb-2';
     penaltyElement.setAttribute('role', 'alert');
     
-    const seconds = Math.round(minutes * 60);
-    const endTime = Date.now() + (seconds * 1000);
     
     const badgeColor = teamColor === 'primary' ? 'primary' : 'danger';
     
@@ -41,121 +63,53 @@ function displayPenalty(playerId, playerNumber, playerName, teamName, minutes, t
             <span class="ms-1">${playerName}</span>
         </div>
         <div>
-            <span class="badge bg-dark" id="penalty-time-${playerId}">${formatTime(seconds)}</span>
+            <span class="badge bg-dark">${minutes} min</span>
             ${globalMatchStatus !== 'probihajici' ? '<span class="badge bg-warning ms-2">PAUSED</span>' : ''}
         </div>
     `;
     
+    
     penaltyContainer.appendChild(penaltyElement);
     
-    const isMatchRunning = globalMatchStatus === 'probihajici';
-    
-    penaltyTimers[playerId] = {
-        interval: null,
+   
+    displayedPenalties[playerId] = {
         element: penaltyElement,
-        endTime: endTime,
-        remainingSeconds: seconds,
-        started: isMatchRunning
+        minutes: minutes,
+        teamName: teamName,
+        playerName: playerName,
+        playerNumber: playerNumber
     };
-    
-    if (isMatchRunning) {
-        startPenaltyTimer(playerId);
-    }
 }
 
-function startPenaltyTimer(playerId) {
-    const penaltyTimer = penaltyTimers[playerId];
-    if (!penaltyTimer) return;
-    
-    if (penaltyTimer.interval) {
-        clearInterval(penaltyTimer.interval);
-    }
-    
-    if (!penaltyTimer.started) {
-        penaltyTimer.endTime = Date.now() + (penaltyTimer.remainingSeconds * 1000);
-        penaltyTimer.started = true;
-    }
-    
-    const timeDisplay = document.getElementById(`penalty-time-${playerId}`);
-    if (timeDisplay) {
-        const pauseBadge = timeDisplay.nextElementSibling;
-        if (pauseBadge && pauseBadge.classList.contains('badge')) {
-            pauseBadge.remove();
-        }
-    }
-    
-    penaltyTimer.interval = setInterval(() => {
-        const remainingMs = penaltyTimer.endTime - Date.now();
-        const timeDisplay = document.getElementById(`penalty-time-${playerId}`);
-        
-        if (remainingMs <= 0 || !timeDisplay) {
-            clearInterval(penaltyTimer.interval);
-            if (penaltyTimer.element.parentNode) {
-                penaltyTimer.element.parentNode.removeChild(penaltyTimer.element);
-            }
-            
-            delete penaltyTimers[playerId];
-            
-            if (Object.keys(penaltyTimers).length === 0) {
-                const noPenaltiesMessage = document.getElementById('no-penalties-message');
-                if (noPenaltiesMessage) {
-                    noPenaltiesMessage.style.display = 'block';
-                }
-            }
-        } else {
-            timeDisplay.textContent = formatTime(Math.ceil(remainingMs / 1000));
-            
-            penaltyTimer.remainingSeconds = Math.ceil(remainingMs / 1000);
-        }
-    }, 1000);
-}
-
-function pauseAllPenaltyTimers() {
-    Object.keys(penaltyTimers).forEach(playerId => {
-        const penaltyTimer = penaltyTimers[playerId];
-        
-        if (penaltyTimer.interval) {
-            clearInterval(penaltyTimer.interval);
-            penaltyTimer.interval = null;
-        }
-        
-        if (penaltyTimer.started && penaltyTimer.endTime) {
-            const remainingMs = penaltyTimer.endTime - Date.now();
-            penaltyTimer.remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
-        }
-        
-        const timeDisplay = document.getElementById(`penalty-time-${playerId}`);
-        if (timeDisplay && !timeDisplay.nextElementSibling?.classList.contains('badge')) {
-            const pauseBadge = document.createElement('span');
-            pauseBadge.className = 'badge bg-warning ms-2';
-            pauseBadge.textContent = 'PAUSED';
-            timeDisplay.after(pauseBadge);
-        }
-    });
-}
-
-function resumeAllPenaltyTimers() {
-    Object.keys(penaltyTimers).forEach(playerId => {
-        startPenaltyTimer(playerId);
-    });
-}
 
 function handleMatchStateChange(newState) {
     globalMatchStatus = newState;
     
-    if (newState === 'probihajici') {
-        resumeAllPenaltyTimers();
-    } else {
-        pauseAllPenaltyTimers();
-    }
+   
+    Object.keys(displayedPenalties).forEach(playerId => {
+        const penaltyElement = displayedPenalties[playerId].element;
+        const badgeContainer = penaltyElement.querySelector('div:last-child');
+        
+        const existingBadge = badgeContainer.querySelector('.badge.bg-warning');
+        if (existingBadge) {
+            existingBadge.remove();
+        }
+        
+        if (newState !== 'probihajici') {
+            const pauseBadge = document.createElement('span');
+            pauseBadge.className = 'badge bg-warning ms-2';
+            pauseBadge.textContent = 'PAUSED';
+            badgeContainer.appendChild(pauseBadge);
+        }
+    });
     
-    setAutoRefresh(newState === 'probihajici');
+    setAutoRefresh(true);
 }
 
 function setAutoRefresh(enable) {
     if (enable && !isAutoRefreshing) {
         isAutoRefreshing = true;
-        refreshInterval = setInterval(refreshMatchData, 15000); 
+        refreshInterval = setInterval(refreshMatchData, 1000);
     } else if (!enable && isAutoRefreshing) {
         isAutoRefreshing = false;
         if (refreshInterval) {
@@ -191,12 +145,55 @@ function refreshMatchData() {
 }
 
 function updateMatchDisplay(data) {
-    console.log('Received fresh match data');
+    if (data.active_penalties) {
+        const currentPlayerIds = data.active_penalties.map(p => p.player_id.toString());
+        
+        Object.keys(displayedPenalties).forEach(playerId => {
+            if (!currentPlayerIds.includes(playerId)) {
+                if (displayedPenalties[playerId].element && displayedPenalties[playerId].element.parentNode) {
+                    displayedPenalties[playerId].element.parentNode.removeChild(displayedPenalties[playerId].element);
+                }
+                delete displayedPenalties[playerId];
+            }
+        });
+        
+        const uniquePenalties = {};
+        data.active_penalties.forEach(penalty => {
+            uniquePenalties[penalty.player_id] = penalty;
+        });
+        
+        Object.values(uniquePenalties).forEach(penalty => {
+            if (!displayedPenalties[penalty.player_id]) {
+                displayPenalty(
+                    penalty.player_id,
+                    penalty.player_number,
+                    penalty.player_name,
+                    penalty.team_type,
+                    penalty.remaining_minutes,
+                    penalty.team_color || (penalty.team_type === 'Domácí' ? 'primary' : 'danger')
+                );
+            }
+        });
+        
+        if (Object.keys(displayedPenalties).length === 0) {
+            const noPenaltiesMessage = document.getElementById('no-penalties-message');
+            if (noPenaltiesMessage) {
+                noPenaltiesMessage.style.display = 'block';
+            }
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
+    const sportElement = document.querySelector('[data-sport]');
+    const sport = sportElement ? sportElement.getAttribute('data-sport') : '';
+    
+    if (sport === 'fotbal') {
+        return;
+    }
+    
     if (!window.matchCore) {
-        console.error('core.js must be loaded before view-detail.js');
+        console.error('core.js must be loaded before detail.js');
         return;
     }
     
@@ -208,7 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
                           statusText.includes('ukončen') ? 'ukoncene' : 'nadchazejici';
     }
     
-    setAutoRefresh(globalMatchStatus === 'probihajici');
+    setAutoRefresh(true);
     
     document.addEventListener('matchStatusChanged', function(e) {
         handleMatchStateChange(e.detail.status);
@@ -216,35 +213,22 @@ document.addEventListener('DOMContentLoaded', function() {
     
     try {
         if (typeof initialPenalties !== 'undefined' && initialPenalties && initialPenalties.length > 0) {
+            clearAllPenalties();
+            
+            const uniquePenalties = {};
+            
             initialPenalties.forEach(penalty => {
-                const playerElement = document.querySelector(`[data-player-id="${penalty.player_id}"]`);
-                const playerRow = playerElement ? playerElement.closest('tr') : null;
-                let playerName = 'Player';
-                let playerNumber = penalty.player_number || '?';
-                let teamName = 'Team';
-                let teamColor = 'primary';
-                
-                if (playerRow) {
-                    playerName = playerRow.querySelector('td:nth-child(2)').textContent.trim();
-                    playerNumber = playerRow.querySelector('td:nth-child(1)').textContent.trim();
-                    
-                    const table = playerRow.closest('table');
-                    const card = table.closest('.card');
-                    const header = card.querySelector('.card-header');
-                    
-                    if (header) {
-                        teamName = header.textContent.trim();
-                        teamColor = header.classList.contains('bg-primary') ? 'primary' : 'danger';
-                    }
-                }
-                
+                uniquePenalties[penalty.player_id] = penalty;
+            });
+            
+            Object.values(uniquePenalties).forEach(penalty => {
                 displayPenalty(
                     penalty.player_id,
-                    playerNumber,
-                    playerName,
-                    teamName,
+                    penalty.player_number,
+                    penalty.player_name,
+                    penalty.team_type,
                     penalty.remaining_minutes,
-                    teamColor
+                    penalty.team_color || (penalty.team_type === 'Domácí' ? 'primary' : 'danger')
                 );
             });
         }

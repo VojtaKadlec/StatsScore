@@ -11,17 +11,23 @@ class Zapas(models.Model):
         choices=[
             ("nadchazejici", "Nadcházející"),
             ("probihajici", "Probíhající"),
-            ("paused", "Pozastaveno"),  # Add a paused status
+            ("paused", "Pozastaveno"),
             ("ukoncene", "Ukončené")
         ],
-        max_length=20
+        max_length=20,
+        default="nadchazejici"
     )
     start_time = models.DateTimeField(null=True, blank=True)
-    pause_time = models.DateTimeField(null=True, blank=True)  # Add this field
-    elapsed_time = models.IntegerField(default=0)  # Add this field (in seconds)
+    pause_time = models.DateTimeField(null=True, blank=True)
+    elapsed_time = models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.domaci} - {self.hoste}"
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            self.status = "nadchazejici"
+        super().save(*args, **kwargs)
 
 class Liga(models.Model):
     jmeno = models.CharField(max_length=20)
@@ -30,4 +36,3 @@ class Liga(models.Model):
 
     def __str__(self):
         return self.jmeno
-    

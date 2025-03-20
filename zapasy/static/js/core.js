@@ -2,6 +2,7 @@ let elapsedTime = 0;
 let timerElement = null;
 let timerInterval = null;
 let matchStatus = 'unknown';
+let matchDuration = 0; 
 
 function updateTimerDisplay() {
     if (!timerElement) {
@@ -17,6 +18,13 @@ function updateTimerDisplay() {
 function updateTimer() {
     elapsedTime += 1;
     updateTimerDisplay();
+    
+    if (matchDuration > 0 && elapsedTime >= matchDuration) {
+        stopTimer();
+        if (matchStatus === 'probihajici') {
+            performAction('pause');
+        }
+    }
 }
 
 function startTimer() {
@@ -103,6 +111,14 @@ function performAction(action) {
       });
 }
 
+function setMatchDuration(duration) {
+    matchDuration = duration;
+}
+
+function setElapsedTime(time) {
+    elapsedTime = time;
+}
+
 function getMatchStatusFromDisplay() {
     const statusElement = document.getElementById('match-status');
     if (statusElement) {
@@ -120,8 +136,10 @@ function getMatchStatus() {
 
 document.addEventListener('DOMContentLoaded', function() {
     timerElement = document.getElementById('elapsed-time');
-    const timerRunning = document.body.getAttribute('data-timer-running') === 'True';
-    const initialTime = parseInt(document.body.getAttribute('data-elapsed-time') || '0', 10);
+    
+    const container = document.querySelector('[data-timer-running]');
+    const timerRunning = container && container.getAttribute('data-timer-running') === 'True';
+    const initialTime = parseInt((container && container.getAttribute('data-elapsed-time')) || '0', 10);
     
     if (initialTime) {
         elapsedTime = initialTime;
@@ -131,9 +149,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (timerRunning) {
         startTimer();
-    } else {
-        updateTimerDisplay();
     }
+    
+    updateTimerDisplay();
     
     updateButtonStates(matchStatus);
     
@@ -166,12 +184,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-
 window.matchCore = {
     updateTimerDisplay,
     startTimer,
     stopTimer,
     updateButtonStates,
     performAction,
-    getMatchStatus
+    getMatchStatus,
+    setMatchDuration,
+    setElapsedTime
 };

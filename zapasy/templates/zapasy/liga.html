@@ -1,27 +1,141 @@
 {% extends 'zapasy/base.html' %}
-
+{% load static %}
 {% block title %}{{ liga.jmeno }}{% endblock %}
 
 {% block content %}
+<style>
+    {% if liga.sport.jmeno == 'fotbal' %}
+        body {
+            background-image: url("{% static 'images/fotbal.jpg' %}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+    {% elif liga.sport.jmeno == 'hazena' %}
+        body {
+            background-image: url("{% static 'images/hazena.jpg' %}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+    {% elif liga.sport.jmeno == 'hokej' %}
+        body {
+            background-image: url("{% static 'images/hokej.jpg' %}");
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+        }
+    {% endif %}
+    
+    .container {
+        padding: 20px;
+    }
+    
+    h1 {
+        color: white;
+        text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.9);
+        font-weight: 700;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: inline-block;
+        padding: 10px 25px;
+        border-radius: 10px;
+        margin-bottom: 25px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        letter-spacing: 1px;
+        font-size: 2.5rem;
+    }
+
+    .card {
+        background-color: rgba(33, 37, 41, 0.85) !important;
+    }
+    
+    .text-center:not(h1) {
+        color: white;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.7);
+    }
+    
+    .filter-button {
+        background-color: rgba(0, 0, 0, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        color: white;
+        font-weight: 500;
+        padding: 8px 16px;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+    }
+    
+    .filter-button:hover, .filter-button:focus {
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        border-color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .dropdown-menu {
+        background-color: rgba(30, 30, 30, 0.95);
+    }
+    
+    .dropdown-item {
+        color: rgba(255, 255, 255, 0.9);
+    }
+    
+    .dropdown-item:hover, .dropdown-item:focus {
+        background-color: rgba(60, 60, 60, 0.9);
+        color: white;
+    }
+    
+    .dropdown-item.active {
+        background-color: rgba(13, 110, 253, 0.8);
+    }
+    
+    .dropdown-divider {
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+</style>
+
 <div class="container">
-    <h1 class="text-center my-4">{{ liga.jmeno }}</h1>
-    <div class="row">
+    <div class="d-flex justify-content-between align-items-center my-4">
+        <h1>{{ liga.jmeno }}</h1>
+        
+        <div class="dropdown">
+            <button class="btn filter-button dropdown-toggle" type="button" id="statusFilterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                Filtr
+            </button>
+            <ul class="dropdown-menu" aria-labelledby="statusFilterDropdown">
+                <li><a class="dropdown-item active" href="#" data-status="all">Všechny</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item" href="#" data-status="nadchazejici">Nadcházející</a></li>
+                <li><a class="dropdown-item" href="#" data-status="probihajici">Probíhající</a></li>
+                <li><a class="dropdown-item" href="#" data-status="paused">Pozastaveno</a></li>
+                <li><a class="dropdown-item" href="#" data-status="ukoncene">Ukončené</a></li>
+            </ul>
+        </div>
+    </div>
+    
+    <div class="row" id="zapasy-container">
         {% for zapas in zapasy %}
-            <div class="col-md-4 mb-4">
+            <div class="col-md-4 mb-4 zapas-card" data-status="{{ zapas.status }}">
                 <div class="card text-white bg-dark border-light">
                     <div class="card-body">
                         <h5 class="card-title">{{ zapas.domaci }} vs {{ zapas.hoste }}</h5>
                         <p class="card-text">{{ zapas.datum }}</p>
                         <p class="card-text">
-                            <span class="badge 
-                                {% if zapas.status == 'nadchazejici' %} bg-warning 
-                                {% elif zapas.status == 'probihajici' %} bg-primary 
-                                {% elif zapas.status == 'ukoncene' %} bg-success 
+                            <span class="badge
+                                {% if zapas.status == 'nadchazejici' %} bg-warning
+                                {% elif zapas.status == 'probihajici' %} bg-primary
+                                {% elif zapas.status == 'paused' %} bg-secondary
+                                {% elif zapas.status == 'ukoncene' %} bg-success
                                 {% endif %}">
                                 {{ zapas.get_status_display }}
                             </span>
                         </p>
-                        <a href="{% url 'zapas' zapas.id %}" class="btn btn-outline-light">Detail zápasu</a>
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'zapas' zapas.id %}" class="btn btn-outline-light">Detail zápasu</a>
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'control' zapas.id %}" class="btn btn-outline-primary">Ovládání</a>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -29,5 +143,54 @@
             <p class="text-center">Žádné zápasy v této lize.</p>
         {% endfor %}
     </div>
+    
+    <div id="no-matches-message" class="text-center mt-4 d-none">
+        <p>Žádné zápasy s vybraným filtrem.</p>
+    </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterItems = document.querySelectorAll('.dropdown-item[data-status]');
+        
+        const zapasCards = document.querySelectorAll('.zapas-card');
+        
+        const filterButtonText = document.getElementById('statusFilterDropdown');
+        
+        const noMatchesMessage = document.getElementById('no-matches-message');
+        
+        filterItems.forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                filterItems.forEach(i => i.classList.remove('active'));
+                
+                this.classList.add('active');
+                
+                const statusToShow = this.getAttribute('data-status');
+                
+                filterButtonText.textContent = this.textContent;
+                
+                let visibleCount = 0;
+                
+                zapasCards.forEach(card => {
+                    const cardStatus = card.getAttribute('data-status');
+                    
+                    if (statusToShow === 'all' || statusToShow === cardStatus) {
+                        card.classList.remove('d-none');
+                        visibleCount++;
+                    } else {
+                        card.classList.add('d-none');
+                    }
+                });
+                
+                if (visibleCount === 0) {
+                    noMatchesMessage.classList.remove('d-none');
+                } else {
+                    noMatchesMessage.classList.add('d-none');
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

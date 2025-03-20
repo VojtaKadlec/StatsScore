@@ -3,7 +3,7 @@
 {% load static %}
 
 {% block content %}
-<div class="container mt-4" data-sport="{{ zapas.sport.jmeno }}" data-match-id="{{ zapas.id }}" data-timer-running="{{ timer_running }}" data-elapsed-time="{{ elapsed_time }}">
+<div class="container mt-4" data-sport="{{ zapas.sport.jmeno }}" data-match-id="{{ zapas.id }}" data-timer-running="{{ timer_running }}" data-elapsed-time="{{ elapsed_time|default:0 }}">
     
     <div class="card mb-4 shadow">
         <div class="card-header bg-primary text-white">
@@ -37,14 +37,24 @@
                     </div>
                     <div class="d-flex align-items-center mb-2">
                         <i class="bi bi-trophy me-2"></i>
-                        <span>{{ zapas.sport.jmeno }}</span>
+                        <span>
+                            {% if zapas.sport.jmeno == 'fotbal' %}
+                                <img src="{% static 'images/football.png' %}" alt="Football" width="24" height="24">
+                            {% elif zapas.sport.jmeno == 'hazena' %}
+                                <img src="{% static 'images/handball.png' %}" alt="Handball" width="24" height="24">
+                            {% elif zapas.sport.jmeno == 'hokej' %}
+                                <img src="{% static 'images/hockey.png' %}" alt="Hockey" width="24" height="24">
+                            {% else %}
+                                {{ zapas.sport.jmeno }}
+                            {% endif %}
+                        </span>
                     </div>
                 </div>
                 
                 <div class="col-md-6 text-md-end">
                     <div id="timer" class="fs-4 fw-bold">
                         <i class="bi bi-stopwatch me-2"></i>
-                        Čas zápasu: <span id="elapsed-time">
+                        <span id="elapsed-time">
                         {% with minutes=elapsed_time|default:"0"|div:60 seconds=elapsed_time|default:"0"|mod:60 %}
                             {{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }}
                         {% endwith %}
@@ -161,6 +171,7 @@
         </div>
     </div>
     
+    {% if zapas.sport.jmeno != 'fotbal' %}
     <div id="penalty-box" class="card shadow mb-4">
         <div class="card-header bg-warning text-dark">
             <h4 class="mb-0"><i class="bi bi-exclamation-triangle me-2"></i>Trestná lavice</h4>
@@ -169,7 +180,41 @@
             <div class="text-center text-muted" id="no-penalties-message">
                 Momentálně žádné tresty
             </div>
+            {% if active_penalties %}
+                <script>
+                    document.getElementById('no-penalties-message').style.display = 'none';
+                </script>
+                {% regroup active_penalties by player_id as grouped_penalties %}
+                {% for group in grouped_penalties %}
+                    {% with penalty=group.list|first %}
+                    <div class="alert alert-light border d-flex justify-content-between align-items-center mb-2" role="alert">
+                        <div>
+                            <span class="badge bg-{% if penalty.team_type == 'Domácí' %}primary{% else %}danger{% endif %} me-2">{{ penalty.team_type }}</span>
+                            <strong>#{{ penalty.player_number }}</strong> 
+                            <span class="ms-1">{{ penalty.player_name }}</span>
+                        </div>
+                        <div>
+                            <span class="badge bg-dark">
+                                {% with total_seconds=penalty.remaining_minutes|mul:60|floatformat:0 %}
+                                    {% with minutes=total_seconds|div:60 %}
+                                        {% with seconds=total_seconds|mod:60 %}
+                                            {{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }}
+                                        {% endwith %}
+                                    {% endwith %}
+                                {% endwith %}
+                            </span>
+                            {% if zapas.status != 'probihajici' %}<span class="badge bg-warning ms-2">PAUSED</span>{% endif %}
+                        </div>
+                    </div>
+                    {% endwith %}
+                {% endfor %}
+            {% endif %}
         </div>
+    </div>
+    {% endif %}
+    
+    <div id="penalties-data" style="display: none;">
+        {% if active_penalties %}{{ active_penalties|safe }}{% else %}[]{% endif %}
     </div>
     
     <div class="card shadow mb-4">
@@ -246,13 +291,7 @@
     </div>
 </div>
 
-<div id="penalties-data" style="display: none;">
-    {% if active_penalties %}{{ active_penalties|safe }}{% else %}[]{% endif %}
-</div>
-
 <script>
-    const initialPenalties = JSON.parse(document.getElementById('penalties-data').textContent);
-
     document.addEventListener('DOMContentLoaded', function() {
         const domaciProgress = document.getElementById('domaci-progress');
         const hosteProgress = document.getElementById('hoste-progress');
@@ -264,11 +303,27 @@
         if (hosteProgress) {
             hosteProgress.style.width = hosteProgress.getAttribute('data-width') + '%';
         }
+        
+       
+        const sport = document.querySelector('[data-sport]')?.getAttribute('data-sport');
+        let duration = 0;
+        
+        if (sport === 'fotbal') {
+            duration = 90 * 60; 
+        } else if (sport === 'hokej') {
+            duration = 60 * 60; 
+        } else if (sport === 'hazena') {
+            duration = 60 * 60; 
+        }
+        
+        if (window.matchCore && window.matchCore.setMatchDuration) {
+            window.matchCore.setMatchDuration(duration);
+        }
     });
-
 </script>
 
 {% csrf_token %}
 <script src="{% static 'js/core.js' %}"></script>
 <script src="{% static 'js/detail.js' %}"></script>
+<script src="{% static 'js/timer.js' %}"></script>
 {% endblock %}

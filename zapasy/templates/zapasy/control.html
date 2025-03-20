@@ -3,8 +3,26 @@
 {% load static %}
 
 {% block content %}
-<div class="container" data-sport="{{ zapas.sport.jmeno }}" data-match-id="{{ zapas.id }}" data-timer-running="{{ timer_running }}" data-elapsed-time="{{ elapsed_time }}">
+<div class="container" data-sport="{{ zapas.sport.jmeno }}" data-match-id="{{ zapas.id }}" data-timer-running="{{ timer_running }}" data-elapsed-time="{{ elapsed_time|default:0 }}">
     <h1>Control Dashboard: {{ zapas.domaci }} vs {{ zapas.hoste }}</h1>
+    
+    
+    <div class="score-display mb-3 p-3 bg-light rounded">
+        <div class="row align-items-center">
+            <div class="col-md-4 text-center">
+                <h4>{{ zapas.domaci.jmeno }}</h4>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="display-4 fw-bold" id="match-score">
+                    {{ domaci_score }} - {{ hoste_score }}
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <h4>{{ zapas.hoste.jmeno }}</h4>
+            </div>
+        </div>
+    </div>
+    
     <p>Status: <span id="match-status">{{ zapas.get_status_display }}</span></p>
 
     <div class="btn-group">
@@ -15,7 +33,7 @@
 
     <div id="timer" style="font-size: 2rem; margin-top: 20px;">
         Elapsed Time: <span id="elapsed-time">
-            {% with minutes=elapsed_time|div:60 seconds=elapsed_time|mod:60 %}
+            {% with minutes=elapsed_time|default:"0"|div:60 seconds=elapsed_time|default:"0"|mod:60 %}
                 {{ minutes }}:{% if seconds < 10 %}0{% endif %}{{ seconds }}
             {% endwith %}
         </span>
@@ -96,17 +114,35 @@
     </div>
 </div>
 
+<div id="penalties-data" style="display: none;">
+    {% if active_penalties %}{{ active_penalties|safe }}{% else %}[]{% endif %}
+</div>
 
 <script>
     const initialPenalties = JSON.parse(document.getElementById('penalties-data').textContent);
+    
+    document.addEventListener('DOMContentLoaded', function() {
+       
+        const sport = document.querySelector('[data-sport]')?.getAttribute('data-sport');
+        let duration = 0;
+        
+        if (sport === 'fotbal') {
+            duration = 90 * 60; 
+        } else if (sport === 'hokej') {
+            duration = 60 * 60; 
+        } else if (sport === 'hazena') {
+            duration = 60 * 60;
+        }
+        
+        if (window.matchCore && window.matchCore.setMatchDuration) {
+            window.matchCore.setMatchDuration(duration);
+        }
+    });
 </script>
 
-
-
-{% csrf_token %} 
+{% csrf_token %}
 <script src="{% static 'js/core.js' %}"></script>
 <script src="{% static 'js/control.js' %}"></script>
 <script src="{% static 'js/penalty.js' %}"></script>
+<script src="{% static 'js/timer.js' %}"></script>
 {% endblock %}
-
-
