@@ -9,7 +9,7 @@ from sporty.models import Sport
 from stats.models import Stats
 from teamy.models import Hrac
 from .forms import CardForm, GoalForm
-from .models import Liga, Zapas
+from .models import Liga, Zapas, TabulkaBody
 
 
 def index(request):
@@ -157,6 +157,7 @@ def control(request, zapas_id):
                 zapas.elapsed_time += current_session_time
             zapas.status = 'ukoncene'
             zapas.save()
+            update_tabulka(zapas)  
             timer_running = False
         elif action == 'update_stats':
             player_id = int(request.POST.get('hrac'))
@@ -291,3 +292,53 @@ def control(request, zapas_id):
         'hoste_score': hoste_score
     }
     return render(request, 'zapasy/control.html', context)
+
+def tabulka(request):
+    sporty = Sport.objects.all()
+    
+    selected_sport = request.GET.get('sport')
+    selected_liga = request.GET.get('liga')
+    
+    ligy = []
+    tabulka_data = []
+    
+    if selected_sport:
+        sport = get_object_or_404(Sport, jmeno=selected_sport)
+        ligy = Liga.objects.filter(sport=sport)
+        
+        if selected_liga:
+            liga = get_object_or_404(Liga, id=selected_liga)
+            tabulka_data = TabulkaBody.objects.filter(liga=liga).order_by('-body')
+    
+    return render(request, 'zapasy/tabulka.html', {
+        'sporty': sporty,
+        'ligy': ligy,
+        'selected_sport': selected_sport,
+        'selected_liga': selected_liga,
+        'tabulka_data': tabulka_data,
+    })
+
+def update_tabulka(zapas):
+    if zapas.status == 'ukoncene':
+       
+        stats = Stats.objects.filter(zapas=zapas)
+        domaci_score = sum(stat.goly for stat in stats if stat.hrac in zapas.domaci.hraci.all())
+        hoste_score = sum(stat.goly for stat in stats if stat.hrac in zapas.hoste.hraci.all())
+        
+     
+        ligy = Liga.objects.filter(zapasy=zapas)
+        for liga in ligy:
+            domaci_body, created = TabulkaBody.objects.get_or_create(team=zapas.domaci, liga=liga)
+            hoste_body, created = TabulkaBody.objects.get_or_create(team=zapas.hoste, liga=liga)
+            
+            
+            if domaci_score > hoste_score: 
+                domaci_body.body += 2
+            elif hoste_score > domaci_score:  
+                hoste_body.body += 2
+            else:  
+                domaci_body.body += 1
+                hoste_body.body += 1
+            
+            domaci_body.save()
+            hoste_body.save()

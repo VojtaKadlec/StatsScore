@@ -36,3 +36,14 @@ class Liga(models.Model):
 
     def __str__(self):
         return self.jmeno
+    
+class TabulkaBody(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE)
+    liga = models.ForeignKey(Liga, on_delete=models.CASCADE)
+    body = models.IntegerField(default=0)
+    
+    class Meta:
+        unique_together = ('team', 'liga')
+        
+    def __str__(self):
+        return f"{self.team} - {self.liga}: {self.body} bodů"
