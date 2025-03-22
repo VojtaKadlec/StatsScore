@@ -4,7 +4,20 @@
 {% block title %}Tabulka{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+
+<div class="bg-image" style="
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('{% static 'images/podium.jpeg' %}');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.3;
+    z-index: -1;
+"></div>
+    
     <h1 class="mb-4">Tabulka</h1>
 
     <div class="row mb-4">
