@@ -167,7 +167,6 @@ function pauseAllPenaltyTimers() {
             penaltyTimer.remainingSeconds = Math.max(0, Math.ceil(remainingMs / 1000));
         }
         
-        // Add PAUSED badge
         const timeDisplay = document.getElementById(`penalty-time-${playerId}`);
         if (timeDisplay && !timeDisplay.nextElementSibling?.classList.contains('badge')) {
             const pauseBadge = document.createElement('span');
